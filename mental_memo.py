@@ -1,11 +1,12 @@
 import os
 import csv
 import datetime
+from typing import Callable
 import requests
 
 
 # 気象情報取得
-def get_meteorological(now_raw):
+def get_meteorological(now_raw: datetime.datetime) -> tuple[float, float, int]:
     now_meteorological = now_raw.strftime('%Y%m%d%H')
     url = "https://www.jma.go.jp/bosai/amedas/data/map/" + now_meteorological + "0000.json"
     header = {"content-type": "application/json"}
@@ -20,45 +21,54 @@ def get_meteorological(now_raw):
 
 
 # メンタルデータを書き込む
-def data_input():
-    while True:
-        input_body = input("今のカラダの調子を数値化（1～5）してください：")
-        if input_body in list("12345"):
-            break
-        else:
-            print("エラーだよ！もう一度カラダの調子を入力してね")
+def data_input() -> tuple[str, str, str]:
+    def _input_validated(ask_msg: str, err_msg: str, valid_func: Callable[[str], bool]):
+        while not valid_func(input_msg := input(ask_msg)):
+            print(err_msg)
+        return input_msg
 
-    while True:
-        input_mental = input("今のココロの調子を数値化（1～5）してください：")
-        if input_mental in list("12345"):
-            break
-        else:
-            print("エラーだよ！もう一度ココロの調子を入力してね")
+    input_body = _input_validated(
+        ask_msg="今のカラダの調子を数値化（1～5）してください：",
+        err_msg="エラーだよ！もう一度カラダの調子を入力してね",
+        valid_func=lambda s: s in list("12345"),
+    )
+
+    input_mental = _input_validated(
+        ask_msg="今のココロの調子を数値化（1～5）してください：",
+        err_msg="エラーだよ！もう一度ココロの調子を入力してね",
+        valid_func=lambda s: s in list("12345"),
+    )
 
     input_comment = input("今の気分・コメントを書いてください：")
     return input_body, input_mental, input_comment
 
 
 # CSV書き込み
-def white_csv(out_body, out_mental, out_comment):
-    with open(full_path, mode="a", encoding='utf8', newline='') as f:
+def write_csv(out_body: str, out_mental: str, out_comment: str, dst_path: str):
+    now = datetime.datetime.now()
+    temperature, pressure, humidity = get_meteorological(now)
+    now_format = now.strftime("%Y-%m-%d %H:%M")
+
+    with open(dst_path, mode="a", encoding='utf8', newline='') as f:
         csvwriter = csv.writer(f)
-        now = datetime.datetime.now()
-        temperature, pressure, humidity = get_meteorological(now)
-        now_format = now.strftime("%Y-%m-%d %H:%M")
-        if os.stat(full_path).st_size == 0:
-            empty_data = ["日付", "気温", "気圧", "湿度", "カラダ", "ココロ", "コメント"]
-            csvwriter.writerow(empty_data)
-        csv_format = [[now_format, temperature, pressure, humidity, out_body, out_mental, out_comment]]
-        csvwriter.writerows(csv_format)
+        if os.stat(dst_path).st_size == 0:
+            columns = ["日付", "気温", "気圧", "湿度", "カラダ", "ココロ", "コメント"]
+            csvwriter.writerow(columns)
+        new_data = [[now_format, temperature, pressure, humidity, out_body, out_mental, out_comment]]
+        csvwriter.writerows(new_data)
 
 
-# ファイルパス
-root_dir = "I:\\09_ジャンクボックス\\094_ナレッジ・体調ログ\\体調ログ"
-month_date = datetime.datetime.today()
-month_file = month_date.strftime("%Y-%m")
-full_path = f"{os.path.join(root_dir, month_file)}.csv"
+def main():
+    # ファイルパス
+    root_dir = "I:\\09_ジャンクボックス\\094_ナレッジ・体調ログ\\体調ログ"
+    month_date = datetime.datetime.today()  # datetime.date.today() でも可
+    month_file = f"{month_date:%Y-%m}.csv"
+    full_path = os.path.join(root_dir, month_file)
 
-# 実行
-body, mental, comment = data_input()
-white_csv(body, mental, comment)
+    # 実行
+    body, mental, comment = data_input()
+    write_csv(body, mental, comment, full_path)
+
+
+if __name__ == '__main__':
+    main()
