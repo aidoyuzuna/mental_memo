@@ -21,15 +21,19 @@ def get_meteorological(now_raw):
 
 # メンタルデータを書き込む
 def data_input():
-    input_body = int(input("今のカラダの調子を数値化（1～5）してください："))
-    if input_body < 0 or input_body > 5:
-        print("エラーだよ！もう一度カラダの調子を入力してね")
-        input_body = int(input("今のカラダの調子を数値化（1～5）してください："))
+    while True:
+        input_body = input("今のカラダの調子を数値化（1～5）してください：")
+        if input_body in list("12345"):
+            break
+        else:
+            print("エラーだよ！もう一度カラダの調子を入力してね")
 
-    input_mental = int(input("今のココロの調子を数値化（1～5）してください："))
-    if input_mental < 0 or input_mental > 5:
-        print("エラーだよ！もう一度カラダの調子を入力してね")
-        input_body = int(input("今のココロの調子を数値化（1～5）してください："))
+    while True:
+        input_mental = input("今のココロの調子を数値化（1～5）してください：")
+        if input_mental in list("12345"):
+            break
+        else:
+            print("エラーだよ！もう一度ココロの調子を入力してね")
 
     input_comment = input("今の気分・コメントを書いてください：")
     return input_body, input_mental, input_comment
