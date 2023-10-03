@@ -52,7 +52,7 @@ def write_csv(out_body: str, out_mental: str, out_comment: str, dst_path: str):
     with open(dst_path, mode="a", encoding='utf8', newline='') as f:
         csvwriter = csv.writer(f)
         if os.stat(dst_path).st_size == 0:
-            columns = ["日付", "気温", "気圧", "湿度", "カラダ", "ココロ", "コメント"]
+            columns = ["date","temperature","pressure","humidity","body","mental","comment"]
             csvwriter.writerow(columns)
         new_data = [[now_format, temperature, pressure, humidity, out_body, out_mental, out_comment]]
         csvwriter.writerows(new_data)
